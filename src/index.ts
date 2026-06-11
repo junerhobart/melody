@@ -33,12 +33,21 @@ client.once(Events.ClientReady, (readyClient) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
+  if (!interaction.isChatInputCommand() || !interaction.inGuild()) return;
 
   const command = commands.get(interaction.commandName);
   if (!command) return;
 
   try {
+    if (!interaction.inCachedGuild()) {
+      await interaction.guild!.members.fetch(interaction.user.id);
+    }
+    if (!interaction.inCachedGuild()) {
+      console.error(`[interaction] uncached for /${interaction.commandName}`);
+      await replyEphemeral(interaction, MSG.commandFailed);
+      return;
+    }
+
     await command.execute(interaction);
   } catch (error) {
     console.error(`Command /${interaction.commandName} failed:`, error);
