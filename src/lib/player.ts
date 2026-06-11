@@ -2,6 +2,7 @@ import { Player } from 'discord-player';
 import type { Client } from 'discord.js';
 
 import { registerExtractors } from './extractors';
+import { resolveFfmpegPath } from './ffmpeg';
 import { endAllPolls, endPoll } from './polls';
 
 function attachPlayerEvents(player: Player): void {
@@ -38,8 +39,16 @@ function attachPlayerEvents(player: Player): void {
 }
 
 export async function createPlayer(client: Client): Promise<Player> {
+  const ffmpegPath = resolveFfmpegPath();
+  if (ffmpegPath) {
+    console.log(`[deps] ffmpeg: ${ffmpegPath}`);
+  } else {
+    console.warn('[deps] ffmpeg-static binary not found');
+  }
+
   const player = new Player(client, {
     connectionTimeout: 60_000,
+    ...(ffmpegPath ? { ffmpegPath } : {}),
   });
 
   await registerExtractors(player);

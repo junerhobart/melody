@@ -13,7 +13,7 @@
         "Node 22": "ghcr.io/parkervcp/yolks:nodejs_22"
     },
     "file_denylist": [],
-    "startup": "./node_modules/.bin/tsx src/deploy-commands.ts && ./node_modules/.bin/tsx src/index.ts",
+    "startup": "NODE_ENV=production ./node_modules/.bin/tsx src/deploy-commands.ts && NODE_ENV=production ./node_modules/.bin/tsx src/index.ts",
     "config": {
         "files": "{}",
         "startup": "{\r\n    \"done\": \"Logged in as\"\r\n}",
@@ -22,7 +22,7 @@
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\nset -e\n\napt-get update -qq\napt-get install -y -qq git > \/dev\/null\n\nmkdir -p \/mnt\/server\ncd \/mnt\/server\n\nGIT_BRANCH=\"${GIT_BRANCH:-main}\"\nREPO=\"github.com\/junerhobart\/discord-bot.git\"\n\nif [ -n \"${GIT_TOKEN}\" ]; then\n    CLONE_URL=\"https:\/\/${GIT_TOKEN}@${REPO}\"\nelse\n    CLONE_URL=\"https:\/\/${REPO}\"\nfi\n\nif [ -d .git ]; then\n    git remote set-url origin \"${CLONE_URL}\"\n    git fetch origin \"${GIT_BRANCH}\"\n    git reset --hard \"origin\/${GIT_BRANCH}\"\nelse\n    git clone --depth 1 --branch \"${GIT_BRANCH}\" \"${CLONE_URL}\" .\nfi\n\nnpm install -g pnpm\npnpm install\n\necho \"Install complete\"",
+            "script": "#!\/bin\/bash\nset -e\n\napt-get update -qq\napt-get install -y -qq git > \/dev\/null\n\nmkdir -p \/mnt\/server\ncd \/mnt\/server\n\nGIT_BRANCH=\"${GIT_BRANCH:-main}\"\nREPO=\"github.com\/junerhobart\/discord-bot.git\"\n\nif [ -n \"${GIT_TOKEN}\" ]; then\n    CLONE_URL=\"https:\/\/${GIT_TOKEN}@${REPO}\"\nelse\n    CLONE_URL=\"https:\/\/${REPO}\"\nfi\n\nif [ -d .git ]; then\n    git remote set-url origin \"${CLONE_URL}\"\n    git fetch origin \"${GIT_BRANCH}\"\n    git reset --hard \"origin\/${GIT_BRANCH}\"\nelse\n    git clone --depth 1 --branch \"${GIT_BRANCH}\" \"${CLONE_URL}\" .\nfi\n\nnpm install -g pnpm\npnpm install\npnpm approve-builds --all 2>\/dev\/null || true\n\nif [ ! -f node_modules\/ffmpeg-static\/ffmpeg ]; then\n    echo \"Rebuilding ffmpeg-static...\"\n    pnpm rebuild ffmpeg-static 2>\/dev\/null || true\nfi\n\nif [ -f node_modules\/ffmpeg-static\/ffmpeg ]; then\n    echo \"ffmpeg-static: OK\"\nelse\n    echo \"WARNING: ffmpeg-static binary missing\"\nfi\n\necho \"Install complete\"",
             "container": "node:22-bookworm",
             "entrypoint": "bash"
         }
