@@ -1,0 +1,66 @@
+import { useQueue } from 'discord-player';
+import { Client, Events, GatewayIntentBits, Partials } from 'discord.js';
+
+import { commands } from './commands';
+import { config } from './config';
+import { MSG, replyEphemeral } from './lib/ephemeral';
+import { createPlayer } from './lib/player';
+import { endPoll, findPollByMessage, votesNeeded } from './lib/polls';
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessagePolls,
+  ],
+  partials: [Partials.Message],
+});
+
+await createPlayer(client);
+
+client.once(Events.ClientReady, (readyClient) => {
+  console.log(`Logged in as ${readyClient.user.tag}`);
+});
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
+
+  const command = commands.get(interaction.commandName);
+  if (!command) return;
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(`Command /${interaction.commandName} failed:`, error);
+    await replyEphemeral(interaction, MSG.commandFailed).catch(() => {});
+  }
+});
+
+client.on(Events.MessagePollVoteAdd, async (answer) => {
+  try {
+    const poll = findPollByMessage(answer.poll.message.id);
+    if (!poll) return;
+
+    const queue = useQueue(poll.guildId);
+    if (!queue?.channel) {
+      return endPoll(poll.guildId, poll.kind);
+    }
+
+    const listeners = queue.channel.members.filter((member) => !member.user.bot);
+    const voters = await answer.fetchVoters();
+    const validVotes = voters.filter((user) => listeners.has(user.id)).size;
+
+    if (validVotes < votesNeeded(queue)) return;
+
+    if (poll.kind === 'skip') {
+      queue.node.skip();
+    } else {
+      queue.delete();
+    }
+    endPoll(poll.guildId, poll.kind);
+  } catch (error) {
+    console.error('[poll] vote handling failed:', error);
+  }
+});
+
+await client.login(config.discordToken);

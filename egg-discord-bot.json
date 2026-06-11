@@ -1,0 +1,82 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-06-11T17:35:00+00:00",
+    "name": "Discord Music Bot",
+    "author": "junerhobart@users.noreply.github.com",
+    "description": "Ephemeral Discord music bot. discord.js v14 + discord-player v7, YouTube/Spotify/SoundCloud/Apple Music, poll-based vote skip/stop. All replies ephemeral.",
+    "features": [],
+    "docker_images": {
+        "Node 22": "ghcr.io/parkervcp/yolks:nodejs_22"
+    },
+    "file_denylist": [],
+    "startup": "./node_modules/.bin/tsx src/deploy-commands.ts && ./node_modules/.bin/tsx src/index.ts",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Logged in as\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\nset -e\n\napt-get update -qq\napt-get install -y -qq git > \/dev\/null\n\nmkdir -p \/mnt\/server\ncd \/mnt\/server\n\nGIT_BRANCH=\"${GIT_BRANCH:-main}\"\nREPO=\"github.com\/junerhobart\/discord-bot.git\"\n\nif [ -n \"${GIT_TOKEN}\" ]; then\n    CLONE_URL=\"https:\/\/${GIT_TOKEN}@${REPO}\"\nelse\n    CLONE_URL=\"https:\/\/${REPO}\"\nfi\n\nif [ -d .git ]; then\n    git remote set-url origin \"${CLONE_URL}\"\n    git fetch origin \"${GIT_BRANCH}\"\n    git reset --hard \"origin\/${GIT_BRANCH}\"\nelse\n    git clone --depth 1 --branch \"${GIT_BRANCH}\" \"${CLONE_URL}\" .\nfi\n\nnpm install -g pnpm\npnpm install\n\necho \"Install complete\"",
+            "container": "node:22-bookworm",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Discord Bot Token",
+            "description": "Bot token from the Discord Developer Portal (Bot tab).",
+            "env_variable": "DISCORD_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Discord Client ID",
+            "description": "Application ID from the Discord Developer Portal.",
+            "env_variable": "DISCORD_CLIENT_ID",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Discord Guild ID",
+            "description": "Server ID where slash commands are registered.",
+            "env_variable": "DISCORD_GUILD_ID",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Branch",
+            "description": "Branch to install from.",
+            "env_variable": "GIT_BRANCH",
+            "default_value": "main",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "GitHub Token",
+            "description": "Personal access token with repo read access. Required because the repository is private.",
+            "env_variable": "GIT_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        }
+    ]
+}

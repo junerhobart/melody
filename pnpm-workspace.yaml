@@ -1,0 +1,10 @@
+allowBuilds:
+  '@discordjs/opus': true
+  esbuild: true
+  ffmpeg-static: true
+  youtube-dl-exec: true
+onlyBuiltDependencies:
+  - esbuild
+  - youtube-dl-exec
+  - "@discordjs/opus"
+  - ffmpeg-static
