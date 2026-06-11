@@ -1,11 +1,20 @@
 import { useQueue } from 'discord-player';
+import 'dotenv/config';
+
+import { readFileSync } from 'node:fs';
+
 import { Client, Events, GatewayIntentBits, Partials } from 'discord.js';
 
 import { commands } from './commands';
 import { config } from './config';
 import { MSG, replyEphemeral } from './lib/ephemeral';
+import { shouldUseYoutubeDl } from './lib/ffmpeg';
 import { createPlayer } from './lib/player';
 import { endPoll, findPollByMessage, votesNeeded } from './lib/polls';
+
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+  version: string;
+};
 
 const client = new Client({
   intents: [
@@ -20,6 +29,7 @@ await createPlayer(client);
 
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Logged in as ${readyClient.user.tag}`);
+  console.log(`[bot] v${version} | stream: ${shouldUseYoutubeDl() ? 'yt-dlp' : 'innertube'}`);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
