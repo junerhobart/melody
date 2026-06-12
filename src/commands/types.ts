@@ -1,4 +1,5 @@
 import type {
+  AutocompleteInteraction,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
   SlashCommandOptionsOnlyBuilder,
@@ -7,4 +8,5 @@ import type {
 export type Command = {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
   execute: (interaction: ChatInputCommandInteraction<'cached'>) => Promise<void>;
+  autocomplete?: (interaction: AutocompleteInteraction<'cached'>) => Promise<void>;
 };

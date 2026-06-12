@@ -15,6 +15,8 @@ export const MSG = {
   pollFailed: 'Could not create poll here.',
   adminOnly: 'Admin only.',
   queueLimit: 'Limit: 2 songs in queue per user.',
+  songNotFound: 'Song not in queue.',
+  notYourSong: 'Not your song.',
 } as const;
 
 /** Defers ephemeral — Discord shows the cycling "thinking" indicator until editReply. */

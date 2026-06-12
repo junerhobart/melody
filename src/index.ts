@@ -9,6 +9,7 @@ import { commands } from './commands';
 import { config } from './config';
 import { MSG, replyEphemeral } from './lib/ephemeral';
 import { shouldUseYoutubeDl } from './lib/ffmpeg';
+import { followRequester } from './lib/follow';
 import { createPlayer } from './lib/player';
 import { endPoll, findPollByMessage, votesNeeded } from './lib/polls';
 
@@ -33,6 +34,15 @@ client.once(Events.ClientReady, (readyClient) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (interaction.isAutocomplete() && interaction.inCachedGuild()) {
+    try {
+      await commands.get(interaction.commandName)?.autocomplete?.(interaction);
+    } catch (error) {
+      console.error(`Autocomplete /${interaction.commandName} failed:`, error);
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand() || !interaction.inGuild()) return;
 
   const command = commands.get(interaction.commandName);
@@ -52,6 +62,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   } catch (error) {
     console.error(`Command /${interaction.commandName} failed:`, error);
     await replyEphemeral(interaction, MSG.commandFailed).catch(() => {});
+  }
+});
+
+client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
+  try {
+    await followRequester(oldState, newState);
+  } catch (error) {
+    console.error('[follow] failed:', error);
   }
 });
 
