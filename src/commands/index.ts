@@ -1,3 +1,4 @@
+import { help } from './help';
 import { loop } from './loop';
 import { play } from './play';
 import { queue } from './queue';
@@ -8,5 +9,5 @@ import { voteskip } from './voteskip';
 import { votestop } from './votestop';
 
 export const commands = new Map<string, Command>(
-  [play, skip, stop, queue, loop, voteskip, votestop].map((command) => [command.data.name, command]),
+  [play, skip, stop, queue, loop, voteskip, votestop, help].map((command) => [command.data.name, command]),
 );

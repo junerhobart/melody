@@ -7,7 +7,7 @@
     "exported_at": "2026-06-12T10:40:00+00:00",
     "name": "Melody",
     "author": "junerhobart@users.noreply.github.com",
-    "description": "Melody — ephemeral Discord music bot. discord.js v14 + discord-player v7, YouTube/Spotify/SoundCloud/Apple Music, poll-based vote skip/stop. All replies ephemeral.",
+    "description": "Melody \u2014 ephemeral Discord music bot. discord.js v14 + discord-player v7, YouTube/Spotify/SoundCloud/Apple Music, poll-based vote skip/stop. All replies ephemeral.",
     "features": [],
     "docker_images": {
         "Node 22": "ghcr.io/parkervcp/yolks:nodejs_22"
