@@ -70,7 +70,7 @@
         },
         {
             "name": "Anti-Slur Mode",
-            "description": "Slur filter scope: off = disabled, users = specific user IDs only, everyone = all users.",
+            "description": "off = disabled | users = block listed IDs only | everyone = block all users",
             "env_variable": "ANTI_SLUR_MODE",
             "default_value": "off",
             "user_viewable": true,
@@ -80,7 +80,7 @@
         },
         {
             "name": "Anti-Slur User IDs",
-            "description": "Comma-separated Discord user IDs to filter when mode is users.",
+            "description": "Discord user IDs to filter when mode is users. Comma-separated, e.g. 123456789,987654321",
             "env_variable": "ANTI_SLUR_USER_IDS",
             "default_value": "",
             "user_viewable": true,
@@ -90,7 +90,7 @@
         },
         {
             "name": "Anti-Slur Message",
-            "description": "Custom message when a blocked word is detected (optional).",
+            "description": "Ephemeral reply when a blocked word is detected. Leave blank for default.",
             "env_variable": "ANTI_SLUR_MESSAGE",
             "default_value": "",
             "user_viewable": true,
