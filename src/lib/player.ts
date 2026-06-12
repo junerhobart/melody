@@ -3,6 +3,7 @@ import type { Client } from 'discord.js';
 
 import { registerExtractors } from './extractors';
 import { resolveFfmpegPath } from './ffmpeg';
+import { clearLoop, handleLoopFinish } from './loops';
 import { endAllPolls, endPoll } from './polls';
 
 function attachPlayerEvents(player: Player): void {
@@ -12,20 +13,24 @@ function attachPlayerEvents(player: Player): void {
 
   player.events.on('playerFinish', (queue, track) => {
     endPoll(queue.guild.id, 'skip');
+    handleLoopFinish(queue, track);
     console.log(`[finish] ${track.title}`);
   });
 
   player.events.on('emptyQueue', (queue) => {
     endAllPolls(queue.guild.id);
+    clearLoop(queue.guild.id);
     console.log(`[empty] guild ${queue.guild.id}`);
   });
 
   player.events.on('queueDelete', (queue) => {
     endAllPolls(queue.guild.id);
+    clearLoop(queue.guild.id);
   });
 
   player.events.on('disconnect', (queue) => {
     endAllPolls(queue.guild.id);
+    clearLoop(queue.guild.id);
     console.log(`[disconnect] guild ${queue.guild.id}`);
   });
 

@@ -13,6 +13,8 @@ export const MSG = {
   pollRunning: 'Poll already running.',
   pollCreated: 'Poll created.',
   pollFailed: 'Could not create poll here.',
+  adminOnly: 'Admin only.',
+  queueLimit: 'Limit: 2 songs in queue per user.',
 } as const;
 
 /** Defers ephemeral — Discord shows the cycling "thinking" indicator until editReply. */

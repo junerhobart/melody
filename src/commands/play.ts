@@ -1,4 +1,4 @@
-import { useMainPlayer, type Player, type Track } from 'discord-player';
+import { useMainPlayer, useQueue, type GuildQueue, type Player, type Track } from 'discord-player';
 import {
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -10,8 +10,18 @@ import { deferEphemeral, MSG, replyEphemeral } from '../lib/ephemeral';
 import { resolvePlayQuery, type ResolvedQuery } from '../lib/resolve-query';
 import type { Command } from './types';
 
+const MAX_QUEUED_PER_USER = 2;
+const LEAVE_GRACE_MS = 60_000;
+
 function isNoResultError(error: unknown): boolean {
   return error instanceof Error && ('code' in error ? error.code === 'ERR_NO_RESULT' : false);
+}
+
+function queuedByUser(queue: GuildQueue | null, userId: string): number {
+  if (!queue) return 0;
+  const current = queue.currentTrack?.requestedBy?.id === userId ? 1 : 0;
+  const upcoming = queue.tracks.toArray().filter((track) => track.requestedBy?.id === userId).length;
+  return current + upcoming;
 }
 
 async function enqueue(
@@ -26,8 +36,10 @@ async function enqueue(
     requestedBy,
     nodeOptions: {
       disableVolume: true,
-      leaveOnEmpty: false,
-      leaveOnEnd: false,
+      leaveOnEmpty: true,
+      leaveOnEmptyCooldown: LEAVE_GRACE_MS,
+      leaveOnEnd: true,
+      leaveOnEndCooldown: LEAVE_GRACE_MS,
     },
   });
   return track;
@@ -53,6 +65,11 @@ export const play: Command = {
     const permissions = me && voiceChannel.permissionsFor(me);
     if (!permissions?.has([PermissionFlagsBits.Connect, PermissionFlagsBits.Speak])) {
       return replyEphemeral(interaction, MSG.noPermission);
+    }
+
+    const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+    if (!isAdmin && queuedByUser(useQueue(interaction.guildId), interaction.user.id) >= MAX_QUEUED_PER_USER) {
+      return replyEphemeral(interaction, MSG.queueLimit);
     }
 
     const player = useMainPlayer();
