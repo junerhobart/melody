@@ -3,7 +3,8 @@ import type { Message, SendableChannels } from 'discord.js';
 
 export type PollKind = 'skip' | 'stop';
 
-type ActivePoll = { guildId: string; kind: PollKind; message: Message };
+/** trackId undefined = poll targets the currently playing track. */
+type ActivePoll = { guildId: string; kind: PollKind; message: Message; trackId?: string };
 
 const POLL_QUESTION_MAX = 300;
 const pollsByGuildKind = new Map<string, ActivePoll>();
@@ -15,6 +16,10 @@ export function hasPoll(guildId: string, kind: PollKind): boolean {
   return pollsByGuildKind.has(pollKey(guildId, kind));
 }
 
+export function getPoll(guildId: string, kind: PollKind): ActivePoll | undefined {
+  return pollsByGuildKind.get(pollKey(guildId, kind));
+}
+
 export function findPollByMessage(messageId: string): ActivePoll | undefined {
   return pollsByMessage.get(messageId);
 }
@@ -24,6 +29,7 @@ export async function createPoll(
   guildId: string,
   kind: PollKind,
   question: string,
+  trackId?: string,
 ): Promise<void> {
   const message = await channel.send({
     poll: {
@@ -34,7 +40,7 @@ export async function createPoll(
     },
   });
 
-  const poll: ActivePoll = { guildId, kind, message };
+  const poll: ActivePoll = { guildId, kind, message, trackId };
   pollsByGuildKind.set(pollKey(guildId, kind), poll);
   pollsByMessage.set(message.id, poll);
 }

@@ -4,7 +4,7 @@ import type { Client } from 'discord.js';
 import { registerExtractors } from './extractors';
 import { resolveFfmpegPath } from './ffmpeg';
 import { clearLoop, handleLoopFinish } from './loops';
-import { endAllPolls, endPoll } from './polls';
+import { endAllPolls, endPoll, getPoll } from './polls';
 
 function attachPlayerEvents(player: Player): void {
   player.events.on('playerStart', (_queue, track) => {
@@ -12,7 +12,10 @@ function attachPlayerEvents(player: Player): void {
   });
 
   player.events.on('playerFinish', (queue, track) => {
-    endPoll(queue.guild.id, 'skip');
+    const skipPoll = getPoll(queue.guild.id, 'skip');
+    if (skipPoll && (!skipPoll.trackId || skipPoll.trackId === track.id)) {
+      endPoll(queue.guild.id, 'skip');
+    }
     handleLoopFinish(queue, track);
     console.log(`[finish] ${track.title}`);
   });

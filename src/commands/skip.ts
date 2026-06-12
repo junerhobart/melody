@@ -1,37 +1,10 @@
-import { useQueue, type GuildQueue } from 'discord-player';
+import { useQueue } from 'discord-player';
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 
 import { MSG, replyEphemeral } from '../lib/ephemeral';
 import { canControlPlayback } from '../lib/permissions';
+import { CURRENT_TRACK, filterChoices, trackChoices } from '../lib/track-choices';
 import type { Command } from './types';
-
-const CURRENT_TRACK = 'current';
-const MAX_CHOICES = 25;
-const MAX_CHOICE_NAME = 100;
-
-function trimName(name: string): string {
-  return name.length > MAX_CHOICE_NAME ? `${name.slice(0, MAX_CHOICE_NAME - 1)}…` : name;
-}
-
-function skippableChoices(
-  queue: GuildQueue,
-  userId: string,
-  isAdmin: boolean,
-): { name: string; value: string }[] {
-  const choices: { name: string; value: string }[] = [];
-
-  const current = queue.currentTrack;
-  if (current && (isAdmin || current.requestedBy?.id === userId)) {
-    choices.push({ name: trimName(`> ${current.title}`), value: CURRENT_TRACK });
-  }
-
-  queue.tracks.toArray().forEach((track, index) => {
-    if (!isAdmin && track.requestedBy?.id !== userId) return;
-    choices.push({ name: trimName(`${index + 1}. ${track.title}`), value: track.id });
-  });
-
-  return choices.slice(0, MAX_CHOICES);
-}
 
 export const skip: Command = {
   data: new SlashCommandBuilder()
@@ -51,11 +24,11 @@ export const skip: Command = {
     }
 
     const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) ?? false;
-    const search = interaction.options.getFocused().toLowerCase();
-    const choices = skippableChoices(queue, interaction.user.id, isAdmin).filter((choice) =>
-      choice.name.toLowerCase().includes(search),
+    const choices = trackChoices(
+      queue,
+      (track) => isAdmin || track.requestedBy?.id === interaction.user.id,
     );
-    return interaction.respond(choices);
+    return interaction.respond(filterChoices(choices, interaction.options.getFocused()));
   },
 
   async execute(interaction) {

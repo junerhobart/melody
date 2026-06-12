@@ -89,10 +89,17 @@ client.on(Events.MessagePollVoteAdd, async (answer) => {
 
     if (validVotes < votesNeeded(queue)) return;
 
-    if (poll.kind === 'skip') {
+    if (poll.kind === 'stop') {
+      queue.delete();
+    } else if (!poll.trackId) {
       queue.node.skip();
     } else {
-      queue.delete();
+      const track = queue.tracks.toArray().find((queued) => queued.id === poll.trackId);
+      if (track) {
+        queue.removeTrack(track);
+      } else if (queue.currentTrack?.id === poll.trackId) {
+        queue.node.skip();
+      }
     }
     endPoll(poll.guildId, poll.kind);
   } catch (error) {

@@ -37,7 +37,8 @@ export const loop: Command = {
     }
 
     const queue = useQueue(interaction.guildId);
-    if (!queue || !queue.currentTrack) {
+    const current = queue?.currentTrack;
+    if (!queue || !current) {
       return replyEphemeral(interaction, MSG.queueEmpty);
     }
 
@@ -49,8 +50,8 @@ export const loop: Command = {
     if (mode === 'off') {
       return replyEphemeral(interaction, 'Loop off.');
     }
-    const target = mode === 'song' ? 'song' : 'queue';
-    const count = times ? `x${times}` : 'forever';
+    const target = mode === 'song' ? current.title : 'the queue';
+    const count = times ? `${times} times` : 'forever';
     return replyEphemeral(interaction, `Looping ${target} ${count}.`);
   },
 };
