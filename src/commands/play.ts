@@ -2,12 +2,14 @@ import { useMainPlayer, useQueue, type GuildQueue, type Player, type Track } fro
 import {
   PermissionFlagsBits,
   SlashCommandBuilder,
+  type ChatInputCommandInteraction,
   type User,
   type VoiceBasedChannel,
 } from 'discord.js';
 
 import { deferEphemeral, MSG, replyEphemeral } from '../lib/ephemeral';
 import { resolvePlayQuery, type ResolvedQuery } from '../lib/resolve-query';
+import { isSlurBlockedFor, antiSlurMessage } from '../lib/slur-filter';
 import type { Command } from './types';
 
 const MAX_QUEUED_PER_USER = 2;
@@ -15,6 +17,15 @@ const LEAVE_GRACE_MS = 60_000;
 
 function isNoResultError(error: unknown): boolean {
   return error instanceof Error && ('code' in error ? error.code === 'ERR_NO_RESULT' : false);
+}
+
+function removeBlockedTrack(queue: GuildQueue | null, track: Track): void {
+  if (!queue) return;
+  if (queue.currentTrack?.id === track.id) {
+    queue.node.skip();
+  } else {
+    queue.removeTrack(track);
+  }
 }
 
 function queuedByUser(queue: GuildQueue | null, userId: string): number {
@@ -45,6 +56,18 @@ async function enqueue(
   return track;
 }
 
+/** Confirms the queued track, unless the resolved name trips the per-user slur filter. */
+async function respondQueued(
+  interaction: ChatInputCommandInteraction<'cached'>,
+  track: Track,
+): Promise<void> {
+  if (isSlurBlockedFor(interaction.user.id, `${track.title} ${track.author}`)) {
+    removeBlockedTrack(useQueue(interaction.guildId), track);
+    return replyEphemeral(interaction, antiSlurMessage());
+  }
+  return replyEphemeral(interaction, `Queued: ${track.title} (${track.duration})`);
+}
+
 export const play: Command = {
   data: new SlashCommandBuilder()
     .setName('play')
@@ -72,8 +95,13 @@ export const play: Command = {
       return replyEphemeral(interaction, MSG.queueLimit);
     }
 
+    const query = interaction.options.getString('query', true);
+    if (isSlurBlockedFor(interaction.user.id, query)) {
+      return replyEphemeral(interaction, antiSlurMessage());
+    }
+
     const player = useMainPlayer();
-    const resolved = resolvePlayQuery(interaction.options.getString('query', true));
+    const resolved = resolvePlayQuery(query);
 
     try {
       const track = await enqueue(
@@ -83,7 +111,7 @@ export const play: Command = {
         resolved.searchEngine,
         interaction.user,
       );
-      return replyEphemeral(interaction, `Queued: ${track.title} (${track.duration})`);
+      return respondQueued(interaction, track);
     } catch (error) {
       if (!resolved.fallbackEngine || !isNoResultError(error)) {
         if (isNoResultError(error)) {
@@ -101,7 +129,7 @@ export const play: Command = {
         resolved.fallbackEngine!,
         interaction.user,
       );
-      return replyEphemeral(interaction, `Queued: ${track.title} (${track.duration})`);
+      return respondQueued(interaction, track);
     } catch (error) {
       if (isNoResultError(error)) {
         return replyEphemeral(interaction, MSG.noResults);
